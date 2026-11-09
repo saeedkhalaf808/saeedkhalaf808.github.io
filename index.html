@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Overload</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f1226">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+html,body{margin:0;height:100%;background:#0f1226;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;font-family:"Avenir Next","Trebuchet MS",system-ui,sans-serif;color:#fff}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:calc(12px + env(safe-area-inset-top,0px)) 20px 8px;pointer-events:none}
+#sc{font-size:44px;font-weight:800;line-height:1}
+#bs{font-size:16px;font-weight:700;color:#aab3e0}
+#ui{position:fixed;inset:0;background:rgba(10,12,28,.92);display:none;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;overflow:auto}
+.card{text-align:center;max-width:340px;width:100%}
+h1{margin:0 0 6px;font-size:38px}
+p{margin:6px 0 16px;font-size:18px;line-height:1.4;color:#cfd5f5}
+button{font:inherit;font-weight:800;font-size:18px;border:0;border-radius:14px;background:#ffb02e;color:#241703;padding:16px 28px;width:100%;margin-top:10px}
+.alt{background:#2b3266;color:#fff}
+.sm{font-size:15px;margin:10px 0 0;min-height:20px}
+.lbl{font-size:13px;font-weight:700;color:#aab3e0;text-align:left;margin:14px 0 6px;letter-spacing:.05em;text-transform:uppercase}
+.seg{display:flex;gap:6px}
+.seg+.seg{margin-top:8px}
+.seg button{margin:0;padding:12px 4px;font-size:15px;background:#2b3266;color:#fff;border-radius:12px;flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.seg button.on{background:#ffb02e;color:#241703}
+.seg.dis button:not(.on){opacity:.35}
+.seg small{font-size:11px;font-weight:700;opacity:.8}
+input{width:100%;box-sizing:border-box;margin-top:14px;padding:14px;font:inherit;font-size:17px;border-radius:12px;border:2px solid #2b3266;background:#171c3b;color:#fff;text-align:center;user-select:text;-webkit-user-select:text;touch-action:auto}
+.rows{margin:12px 0 4px;text-align:left;font-size:17px;min-height:120px}
+.r{display:grid;grid-template-columns:28px 1fr auto 56px;gap:8px;padding:8px 4px;border-bottom:1px solid #232a52;align-items:center}
+.r small{color:#aab3e0;text-align:right}
+#ctrl{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;justify-content:center;padding:8px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+#ctrl button{width:auto;margin:0;padding:12px 18px;font-size:16px;border-radius:999px;background:#2b3266;color:#fff}
+#ctrl button:disabled{opacity:.5}
+.fl{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.fl i{position:absolute;bottom:-60px;border-radius:50%;opacity:.16;animation:fl linear infinite}
+@keyframes fl{to{transform:translateY(-115vh)}}
+.card{position:relative}
+.mark{display:grid;grid-template-columns:repeat(3,15px);grid-template-rows:repeat(3,15px);gap:3px;justify-content:center;margin:0 auto 10px}
+.mark i{border-radius:50%}
+.tag{margin:0 0 6px;font-size:15px;font-weight:700;color:#aab3e0;letter-spacing:.08em;text-transform:uppercase}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mc{margin:0;padding:12px 8px;border-radius:16px;background:#1c2248;color:#fff;display:flex;flex-direction:column;align-items:center;gap:2px;border:2px solid transparent;font-size:17px}
+.mc .ic{font-size:26px;line-height:1.1}
+.mc small{font-size:12px;font-weight:700;color:#aab3e0}
+.mc.on{border-color:#ffb02e;background:#2a2f63;box-shadow:0 0 18px rgba(255,176,46,.35)}
+.dif button.d0.on{background:#4cd97b;color:#0d2a17}
+.dif button.d2.on{background:#ff5d73;color:#2a0a10}
+.play{font-size:22px;padding:18px;background:linear-gradient(135deg,#ffb02e,#ff7a45);box-shadow:0 6px 22px rgba(255,140,60,.4);margin-top:14px}
+.row3{display:flex;gap:8px}
+.row3 button{margin-top:10px;padding:12px 6px;font-size:15px;flex:1}
+.hw{display:flex;gap:12px;align-items:center;text-align:left;margin:12px 0;font-size:17px;line-height:1.35;color:#cfd5f5}
+.hw i{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:800;color:#10132a}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"><div id="sc">0</div><div id="bs"></div></div>
+<div id="ctrl"><button id="df"></button><button id="mn">Menu</button></div>
+<div id="ui"></div>
+<script>
+const c=document.getElementById('c'),g=c.getContext('2d'),ui=document.getElementById('ui');
+const COLS=7,ROWS=9,D=[[1,0],[-1,0],[0,1],[0,-1]],CC=['','#38c6f4','#4cd97b','#ffb02e'],SUR='#c86bfa';
+// Online leaderboard: paste your Supabase project URL and public key here (see README). Leave empty for a device-only leaderboard.
+const LB={url:'https://zcoausnqpupkcgfznstr.supabase.co',key:'sb_publishable_J91_oildBmbw02vsqzi7tw_eiTrh5U5'};
+const MODES=[['classic','Classic','Endless. Survive as long as you can.'],['timed','Timed','60 seconds. Chains of 4 or more add time.'],['zen','Zen','No game over. Just chain.'],['daily','Daily','Same board for everyone, Normal difficulty.']];
+const MULT=[.6,1,1.5],DN=['Easy','Normal','Hard'],TH=[50,30,15],SURP=[.12,.07,.04],P1=[.85,.7,.55],P2=[.97,.95,.9];
+const ls=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+const online=()=>!!(LB.url&&LB.key);
+const hdr=()=>{const h={apikey:LB.key};if(LB.key.startsWith('eyJ'))h.Authorization='Bearer '+LB.key;return h};
+let muted=ls('overload-muted',false),netOn=ls('overload-net',true),netMsg='';
+const net=()=>netOn&&online();
+let W,H,cell,gx,gy,grid,sg,next=[],rng=Math.random,daily=false,mode='classic',diff=1,tLeft=60,started=false,last=0,score=0,shown=0,best=0,moves=0,busy=true,over=false,fx=[],pops=[],shake=0;
+let selMode='classic',selDiff=1,pname='',lbMode='classic',lbSrc=online()?'online':'local';
+{const s=ls('overload-sel',{m:'classic',d:1});selMode=s.m;selDiff=s.d;pname=String(ls('overload-name','')).slice(0,12)}
+let rec=Object.assign({day:-1,score:0,streak:0,last:-9},ls('overload-daily',{}));
+const saveRec=()=>lsSet('overload-daily',rec);
+const dayIdx=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*60000)/864e5);
+const streak=()=>rec.last>=dayIdx()-1?rec.streak:0;
+function seeded(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function size(){
+  const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;c.width=W*d;c.height=H*d;g.setTransform(d,0,0,d,0,0);
+  const top=document.getElementById('hud').offsetHeight;
+  cell=Math.floor(Math.min((W-20)/COLS,(H-top-130)/ROWS));gx=(W-cell*COLS)/2;gy=top+16;
+}
+addEventListener('resize',size);size();
+let ac;
+function tone(f,d=.12,v=.1){if(muted)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),n=ac.createGain();o.frequency.value=f;n.gain.setValueAtTime(v,ac.currentTime);n.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(n);n.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const emptyCells=()=>{const e=[];grid.forEach((row,r)=>row.forEach((v,k)=>{if(!v)e.push([r,k])}));return e};
+const pop=(txt,size=1)=>pops.push({txt,t:0,size});
+const cnt=m=>{const t=TH[diff];return 1+(m>=t&&m%2===0?1:0)+(m>=t*2.5&&m%3===0?1:0)};
+const addScore=n=>{score+=Math.round(n*MULT[diff])};
+function plan(){
+  next=[];const e=emptyCells();
+  for(let i=0;i<cnt(moves+1)&&e.length;i++){
+    const[r,k]=e.splice(rng()*e.length|0,1)[0],x=rng(),s=moves>=8&&rng()<SURP[diff];
+    next.push({r,k,s,v:s?3:x<P1[diff]?1:x<P2[diff]?2:3});
+  }
+}
+function place(p){
+  let{r,k}=p;
+  if(grid[r][k]){const e=emptyCells();if(!e.length)return;[r,k]=e[rng()*e.length|0]}
+  grid[r][k]=p.v;sg[r][k]=p.s;
+  fx.push({type:'ring',x:k,y:r,t0:performance.now(),col:p.s?SUR:'#fff',dur:300});
+}
+function newGame(m){
+  mode=m||'classic';
+  daily=mode==='daily';if(daily)diff=1;rng=daily?seeded(dayIdx()):Math.random;tLeft=60;started=true;
+  try{best=mode==='zen'?0:+localStorage.getItem(mode==='timed'?'overload-best-timed':'overload-best')||0}catch(e){}
+  updDf();
+  grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));sg=grid.map(r=>r.map(()=>false));
+  score=0;shown=0;moves=0;over=false;busy=false;fx=[];pops=[];
+  for(let i=0;i<11;i++){const e=emptyCells(),[r,k]=e[rng()*e.length|0];grid[r][k]=rng()<.75?1:2}
+  plan();ui.style.display='none';
+}
+async function tap(k,r){
+  if(busy||over||!grid[r][k])return;
+  busy=true;moves++;
+  grid[r][k]++;tone(240,.08,.08);buzz(8);
+  let wave=grid[r][k]>=4?[[r,k]]:[],depth=0,total=0;
+  while(wave.length){
+    depth++;total+=wave.length;
+    const sgs=wave.map(([y,x])=>sg[y][x]);
+    wave.forEach(([y,x])=>{grid[y][x]=0;sg[y][x]=false});
+    const touched=new Set(),now=performance.now();
+    wave.forEach(([y,x],i)=>{
+      fx.push({type:'ring',x,y,t0:now,col:sgs[i]?SUR:'#ff5d73',dur:380});
+      D.forEach(([dy,dx])=>{
+        const ny=y+dy,nx=x+dx;
+        if(ny>=0&&nx>=0&&ny<ROWS&&nx<COLS&&grid[ny][nx]>0){grid[ny][nx]+=sgs[i]?2:1;touched.add(ny*COLS+nx);fx.push({type:'shot',x,y,x1:nx,y1:ny,t0:now,dur:140})}
+      });
+    });
+    addScore(wave.length*depth*10);
+    tone(260+Math.min(depth,14)*55,.14,.1);buzz(12);
+    shake=Math.min(14,depth*1.6);
+    if(depth>=3)pop('Chain x'+total,1+Math.min(depth,10)*.06);
+    if(mode==='timed'&&depth===4){tLeft+=3;setTimeout(()=>pop('+3 seconds',1.1),250)}
+    wave=[...touched].map(v=>[v/COLS|0,v%COLS]).filter(([y,x])=>grid[y][x]>=4);
+    await sleep(150);
+  }
+  if(total&&grid.every(row=>row.every(v=>!v))){addScore(300);pop('Board cleared +300',1.3)}
+  next.forEach(place);plan();
+  if(emptyCells().length===0&&mode!=='zen')return endGame();
+  busy=false;
+}
+function submit(){
+  if(mode==='zen'||score<=0)return;
+  const e={n:(pname||'Player').slice(0,12),s:score,m:mode,d:diff,day:dayIdx()},all=ls('overload-lb',[]);
+  all.push(e);
+  const keep=[];['classic','timed','daily'].forEach(m=>keep.push(...all.filter(x=>x.m===m).sort((a,b)=>b.s-a.s).slice(0,40)));
+  lsSet('overload-lb',keep);
+  if(net())send(e);
+}
+function post(e){return fetch(LB.url+'/rest/v1/leaderboard',{method:'POST',headers:{...hdr(),'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({name:e.n,score:e.s,mode:e.m,diff:e.d,day:e.day})}).then(r=>{if(!r.ok)throw 0})}
+function send(e){post(e).catch(()=>{const q=ls('overload-pending',[]);q.push(e);lsSet('overload-pending',q.slice(-20))})}
+async function flush(){
+  if(!net())return;const q=ls('overload-pending',[]);if(!q.length)return;lsSet('overload-pending',[]);
+  for(const e of q){try{await post(e)}catch(x){const r=ls('overload-pending',[]);r.push(e);lsSet('overload-pending',r)}}
+}
+function endGame(){
+  over=true;let nb=false;
+  if(daily){
+    const d=dayIdx();
+    if(rec.day!==d){rec.streak=rec.last===d-1?rec.streak+1:1;rec.last=d;rec.day=d;rec.score=0}
+    nb=score>rec.score;rec.score=Math.max(rec.score,score);saveRec();
+  }else if(mode!=='zen'&&score>best){nb=true;best=score;try{localStorage.setItem(mode==='timed'?'overload-best-timed':'overload-best',best)}catch(e){}}
+  submit();lbMode=mode==='zen'?'classic':mode;
+  tone(170,.5,.12);
+  const line=daily?`Daily score ${score.toLocaleString()}<br>${streak()} day streak`:`Score ${score.toLocaleString()}<br>${mode==='zen'?'':nb?'New best!':'Best '+best.toLocaleString()}`;
+  setTimeout(()=>{ui.style.display='flex';ui.innerHTML=`<div class=card><h1>${tLeft<=0?'Time’s up':'Overloaded'}</h1><p>${line}</p><p class=sm>${mode==='zen'?'':net()?'Sent to the online leaderboard':'Saved on this phone only'}</p><button onclick="newGame('${mode}')">Play again</button><button class=alt onclick="board()">Leaderboard</button><button class=alt onclick="share()">Share score</button><button class=alt onclick="setup()">Menu</button></div>`},700);
+}
+function share(){
+  const t='I scored '+score.toLocaleString()+(daily?' on today’s Overload daily challenge':' on Overload ('+mode+', '+DN[diff]+')')+'. Can you beat it?';
+  try{(navigator.share?navigator.share({text:t}):navigator.clipboard.writeText(t)).catch(()=>{})}catch(e){}
+}
+function grabName(){const el=document.getElementById('nm');if(el){pname=el.value.slice(0,12);lsSet('overload-name',pname)}}
+function pick(m){grabName();selMode=m;lsSet('overload-sel',{m:selMode,d:selDiff});setup()}
+function pickNet(on){
+  grabName();
+  if(on&&!online()){netMsg='Online play isn’t switched on in this version yet.';setup();return}
+  netMsg='';netOn=on;lsSet('overload-net',on);lbSrc=on?'online':'local';setup();
+}
+function pickD(i){if(selMode==='daily')return;grabName();selDiff=i;lsSet('overload-sel',{m:selMode,d:selDiff});setup()}
+function start(){grabName();flush();diff=selMode==='daily'?1:selDiff;newGame(selMode)}
+function resumeGame(){grabName();ui.style.display='none'}
+const ICON={classic:'♾️',timed:'⏱️',zen:'🧘',daily:'📅'};
+function toggleSound(){muted=!muted;lsSet('overload-muted',muted);setup()}
+function setup(){
+  grabName();
+  const resume=started&&!over;
+  if(!resume){busy=true;grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));sg=grid.map(r=>r.map(()=>false));next=[]}
+  const st=streak(),dd=selMode==='daily'?1:selDiff,md=MODES.find(m=>m[0]===selMode),nm=netMsg;netMsg='';
+  const stat={classic:'Best '+(+ls('overload-best',0)).toLocaleString(),timed:'Best '+(+ls('overload-best-timed',0)).toLocaleString(),zen:'Just relax',daily:rec.day===dayIdx()?'Today '+rec.score.toLocaleString():st?st+' day streak':'New board daily'};
+  const dots=Array.from({length:14},(_,i)=>`<i style="left:${(i*37)%100}%;animation-delay:${-i*1.3}s;animation-duration:${9+(i%5)*2}s;width:${10+(i%4)*8}px;height:${10+(i%4)*8}px;background:${CC[1+i%3]}"></i>`).join('');
+  ui.style.display='flex';
+  ui.innerHTML=`<div class=fl>${dots}</div><div class=card>
+  <div class=mark><i style="grid-area:1/2;background:#38c6f4"></i><i style="grid-area:2/1;background:#ff5d73"></i><i style="grid-area:2/2;background:#ffb02e"></i><i style="grid-area:2/3;background:#c86bfa"></i><i style="grid-area:3/2;background:#4cd97b"></i></div>
+  <h1>Overload</h1><p class=tag>Tap. Chain. Overload.</p>
+  <div class=lbl>Mode</div>
+  <div class=modes>${MODES.map(m=>`<button class="mc ${m[0]===selMode?'on':''}" onclick="pick('${m[0]}')"><span class=ic>${ICON[m[0]]}</span><b>${m[1]}</b><small>${stat[m[0]]}</small></button>`).join('')}</div>
+  <p class=sm>${md[2]}</p>
+  <div class=lbl>Difficulty</div>
+  <div class="seg dif ${selMode==='daily'?'dis':''}">${DN.map((n,i)=>`<button class="d${i} ${dd===i?'on':''}" onclick="pickD(${i})">${n}<small>×${MULT[i]} points</small></button>`).join('')}</div>
+  <div class=lbl>Scores</div>
+  <div class=seg><button class="${net()?'on':''}" onclick="pickNet(true)">🌐 Online<small>${online()?'Shared leaderboard':'Not set up yet'}</small></button><button class="${net()?'':'on'}" onclick="pickNet(false)">📴 Offline<small>This phone only</small></button></div>
+  <p class=sm>${nm}</p>
+  <button class=play onclick="start()">Play ${md[1]}</button>
+  ${resume?'<button class=alt onclick="resumeGame()">Resume current game</button>':''}
+  <div class=row3><button class=alt onclick="board()">🏆 Scores</button><button class=alt onclick="howto()">❓ How to play</button><button class=alt onclick="toggleSound()">${muted?'🔇':'🔊'}</button></div>
+  <input id=nm maxlength=12 placeholder="Your name (for the leaderboard)" value="${esc(pname)}"></div>`;
+}
+function howto(){
+  grabName();
+  ui.style.display='flex';
+  ui.innerHTML=`<div class=card><h1>How to play</h1>
+  <div class=hw><i style="background:#38c6f4">1</i><span>Tap a dot to add 1 charge to it.</span></div>
+  <div class=hw><i style="background:#4cd97b">2</i><span>At 4 a dot bursts and charges the dots next to it.</span></div>
+  <div class=hw><i style="background:#ffb02e">3</i><span>Line up 3s side by side, then pop one for a huge chain.</span></div>
+  <div class=hw><i style="background:#c86bfa">★</i><span>Purple dots hit harder. Dashed outlines show where new dots will land.</span></div>
+  <div class=hw><i style="background:#ff5d73">!</i><span>Don’t let the board fill up.</span></div>
+  <button onclick="setup()">Got it</button></div>`;
+}
+async function board(){
+  grabName();
+  ui.style.display='flex';
+  const modes=['classic','timed','daily'];
+  ui.innerHTML=`<div class=card><h1>Leaderboard</h1>
+  <div class=seg>${modes.map(m=>`<button class="${m===lbMode?'on':''}" onclick="lbMode='${m}';board()">${m[0].toUpperCase()+m.slice(1)}</button>`).join('')}</div>
+  ${online()?`<div class=seg><button class="${lbSrc==='online'?'on':''}" onclick="lbSrc='online';board()">Everyone</button><button class="${lbSrc==='local'?'on':''}" onclick="lbSrc='local';board()">This device</button></div>`:''}
+  <div id=rows class=rows>Loading…</div>
+  <p class=sm>${lbMode==='daily'?'Today’s scores only.':''}${online()?'':' Scores on this device only.'}</p>
+  <button class=alt onclick="setup()">Back</button></div>`;
+  let rows;
+  if(lbSrc==='online'&&online()){
+    try{
+      const q=`${LB.url}/rest/v1/leaderboard?select=name,score,diff&mode=eq.${lbMode}${lbMode==='daily'?'&day=eq.'+dayIdx():''}&order=score.desc&limit=100`;
+      const r=await fetch(q,{headers:hdr()});
+      const seen=new Set();rows=(await r.json()).filter(x=>{const k=String(x.name).toLowerCase();if(seen.has(k))return false;seen.add(k);return true}).slice(0,10).map(x=>({n:x.name,s:x.score,d:x.diff}));
+    }catch(e){rows=null}
+  }else rows=ls('overload-lb',[]).filter(x=>x.m===lbMode&&(lbMode!=='daily'||x.day===dayIdx())).sort((a,b)=>b.s-a.s).slice(0,10).map(x=>({n:x.n,s:x.s,d:x.d}));
+  const el=document.getElementById('rows');if(!el)return;
+  el.innerHTML=rows===null?'Couldn’t load the online board.':rows.length?rows.map((x,i)=>`<div class=r><span>${i+1}</span><span>${esc(x.n)}</span><span>${Number(x.s).toLocaleString()}</span><small>${esc(DN[+x.d]||'')}</small></div>`).join(''):'No scores yet. Play a game!';
+}
+function updDf(){const b=document.getElementById('df');b.disabled=daily;b.textContent=daily?'Normal (daily)':DN[diff]+' ×'+MULT[diff]}
+document.getElementById('df').onclick=()=>{if(daily)return;diff=(diff+1)%3;updDf();pop(DN[diff]+' ×'+MULT[diff],.9);tone(300+diff*120,.1,.08)};
+document.getElementById('mn').onclick=()=>setup();
+addEventListener('pointerdown',e=>{
+  if(ui.style.display==='flex')return;
+  const k=Math.floor((e.clientX-gx)/cell),r=Math.floor((e.clientY-gy)/cell);
+  if(k>=0&&r>=0&&k<COLS&&r<ROWS)tap(k,r);
+});
+const cx=k=>gx+(k+.5)*cell,cy=r=>gy+(r+.5)*cell,FONT='"Avenir Next","Trebuchet MS",system-ui,sans-serif';
+function frame(){
+  const now=performance.now(),d=devicePixelRatio||1,dt=Math.min(.1,(now-last)/1000||0);last=now;
+  if(mode==='timed'&&started&&!over&&ui.style.display!=='flex'){tLeft-=dt;if(tLeft<=0){tLeft=0;endGame()}}
+  g.setTransform(d,0,0,d,0,0);
+  g.fillStyle='#0f1226';g.fillRect(0,0,W,H);
+  if(shake>.3){g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.9}
+  const n=emptyCells().length,low=n<=8;
+  g.fillStyle='#171c3b';g.beginPath();g.roundRect(gx-6,gy-6,cell*COLS+12,cell*ROWS+12,16);g.fill();
+  if(low&&!over){g.strokeStyle='rgba(255,93,115,'+(.35+.3*Math.sin(now/180))+')';g.lineWidth=3;g.stroke()}
+  g.textAlign='center';g.textBaseline='middle';
+  for(let r=0;r<ROWS;r++)for(let k=0;k<COLS;k++){
+    const v=grid[r][k];
+    if(!v){g.fillStyle='#232a52';g.beginPath();g.arc(cx(k),cy(r),cell*.1,0,7);g.fill();continue}
+    const pulse=v===3?1+.06*Math.sin(now/110):1;
+    g.fillStyle=sg[r][k]?SUR:CC[v];g.beginPath();g.arc(cx(k),cy(r),cell*.39*pulse,0,7);g.fill();
+    if(sg[r][k]){g.strokeStyle='#fff';g.lineWidth=3;g.stroke()}
+    g.fillStyle='rgba(255,255,255,.28)';g.beginPath();g.arc(cx(k)-cell*.1,cy(r)-cell*.12,cell*.13,0,7);g.fill();
+    g.fillStyle='#10132a';g.font='800 '+Math.round(cell*.42)+'px '+FONT;g.fillText(v,cx(k),cy(r)+cell*.03);
+  }
+  if(!over)next.forEach(p=>{
+    g.globalAlpha=.6;g.strokeStyle=p.s?SUR:CC[p.v];g.lineWidth=2;g.setLineDash([4,4]);
+    g.beginPath();g.arc(cx(p.k),cy(p.r),cell*.3,0,7);g.stroke();g.setLineDash([]);
+    g.fillStyle=p.s?SUR:CC[p.v];g.font='700 '+Math.round(cell*.28)+'px '+FONT;g.fillText(p.v,cx(p.k),cy(p.r)+cell*.02);g.globalAlpha=1;
+  });
+  fx=fx.filter(f=>now-f.t0<f.dur);
+  fx.forEach(f=>{
+    const p=(now-f.t0)/f.dur;
+    if(f.type==='ring'){g.globalAlpha=1-p;g.strokeStyle=f.col;g.lineWidth=4;g.beginPath();g.arc(cx(f.x),cy(f.y),cell*(.3+p*.9),0,7);g.stroke()}
+    else{g.globalAlpha=1;g.fillStyle='#fff';g.beginPath();g.arc(cx(f.x)+(cx(f.x1)-cx(f.x))*p,cy(f.y)+(cy(f.y1)-cy(f.y))*p,cell*.1,0,7);g.fill()}
+  });
+  g.globalAlpha=1;
+  g.fillStyle=low?'#ff8a9a':'#8e98cc';g.font='700 16px '+FONT;
+  g.fillText(n+' spaces left',W/2,gy+cell*ROWS+34);
+  pops=pops.filter(q=>q.t<70);
+  pops.forEach(q=>{
+    g.globalAlpha=Math.max(0,1-q.t/70);g.font='800 '+Math.round(cell*.7*q.size)+'px '+FONT;
+    g.lineWidth=6;g.strokeStyle='rgba(10,12,28,.9)';g.fillStyle='#fff';
+    const y=gy+cell*ROWS*.45-q.t*.8;g.strokeText(q.txt,W/2,y);g.fillText(q.txt,W/2,y);q.t++;
+  });
+  g.globalAlpha=1;
+  shown+=(score-shown)*.2;if(Math.abs(score-shown)<1)shown=score;
+  document.getElementById('sc').textContent=Math.round(shown).toLocaleString();
+  document.getElementById('bs').textContent=daily?'Daily challenge':mode==='zen'?'Zen':mode==='timed'?Math.ceil(tLeft)+'s · Best '+Math.max(best,score).toLocaleString():'Best '+Math.max(best,score).toLocaleString();
+  requestAnimationFrame(frame);
+}
+grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));sg=grid.map(r=>r.map(()=>false));
+updDf();setup();frame();
+if(!ls('overload-seen',false)){lsSet('overload-seen',true);howto()}
+</script>
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))</script>
+</body>
+</html>
