@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Overload</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f1226">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+html,body{margin:0;height:100%;background:#0f1226;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;font-family:"Avenir Next","Trebuchet MS",system-ui,sans-serif;color:#fff}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:calc(12px + env(safe-area-inset-top,0px)) 20px 8px;pointer-events:none}
+#sc{font-size:44px;font-weight:800;line-height:1}
+#bs{font-size:16px;font-weight:700;color:#aab3e0}
+#ui{position:fixed;inset:0;background:rgba(10,12,28,.92);display:none;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;overflow:auto}
+.card{text-align:center;max-width:340px;width:100%;position:relative}
+h1{margin:0 0 6px;font-size:38px}
+p{margin:6px 0 16px;font-size:18px;line-height:1.4;color:#cfd5f5}
+button{font:inherit;font-weight:800;font-size:18px;border:0;border-radius:14px;background:#ffb02e;color:#241703;padding:16px 28px;width:100%;margin-top:10px}
+.alt{background:#2b3266;color:#fff}
+.sm{font-size:15px;margin:10px 0 0;min-height:20px}
+.lbl{font-size:13px;font-weight:700;color:#aab3e0;text-align:left;margin:14px 0 6px;letter-spacing:.05em;text-transform:uppercase}
+.seg{display:flex;gap:6px}
+.seg+.seg{margin-top:8px}
+.seg button{margin:0;padding:12px 4px;font-size:15px;background:#2b3266;color:#fff;border-radius:12px;flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.seg button.on{background:#ffb02e;color:#241703}
+.seg small{font-size:11px;font-weight:700;opacity:.8}
+input{width:100%;box-sizing:border-box;margin-top:14px;padding:14px;font:inherit;font-size:17px;border-radius:12px;border:2px solid #2b3266;background:#171c3b;color:#fff;text-align:center;user-select:text;-webkit-user-select:text;touch-action:auto}
+.rows{margin:12px 0 4px;text-align:left;font-size:17px;min-height:120px}
+.r{display:grid;grid-template-columns:28px 1fr auto;gap:8px;padding:8px 4px;border-bottom:1px solid #232a52;align-items:center}
+#ctrl{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:8px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+#ctrl button{width:auto;margin:0;padding:12px 28px;font-size:16px;border-radius:999px;background:#2b3266;color:#fff}
+.fl{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.fl i{position:absolute;bottom:-60px;border-radius:50%;opacity:.16;animation:fl linear infinite}
+@keyframes fl{to{transform:translateY(-115vh)}}
+.mark{display:grid;grid-template-columns:repeat(3,15px);grid-template-rows:repeat(3,15px);gap:3px;justify-content:center;margin:0 auto 10px}
+.mark i{border-radius:50%}
+.tag{margin:0 0 6px;font-size:15px;font-weight:700;color:#aab3e0;letter-spacing:.08em;text-transform:uppercase}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mc{margin:0;padding:12px 8px;border-radius:16px;background:#1c2248;color:#fff;display:flex;flex-direction:column;align-items:center;gap:2px;border:2px solid transparent;font-size:17px}
+.mc .ic{font-size:26px;line-height:1.1}
+.mc small{font-size:12px;font-weight:700;color:#aab3e0}
+.mc.on{border-color:#ffb02e;background:#2a2f63;box-shadow:0 0 18px rgba(255,176,46,.35)}
+.play{font-size:22px;padding:18px;background:linear-gradient(135deg,#ffb02e,#ff7a45);box-shadow:0 6px 22px rgba(255,140,60,.4);margin-top:14px}
+.row3{display:flex;gap:8px}
+.row3 button{margin-top:10px;padding:12px 6px;font-size:15px;flex:1}
+.hw{display:flex;gap:12px;align-items:center;text-align:left;margin:12px 0;font-size:17px;line-height:1.35;color:#cfd5f5}
+.hw i{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:800;color:#10132a}
+.code{font-size:46px;font-weight:800;letter-spacing:.12em;color:#ffb02e;margin:4px 0 8px}
+.xpbar{height:10px;border-radius:99px;background:#232a52;overflow:hidden;margin:8px 0 0}
+.xpbar i{display:block;height:100%;background:linear-gradient(90deg,#4cd97b,#ffb02e);border-radius:99px}
+.chip{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;text-align:left;background:#1c2248;border-radius:14px;padding:10px 14px;margin:6px 0 4px;cursor:pointer;font-size:17px}
+.chip span{color:#ffb02e;font-weight:800;font-size:15px}
+.chip .xpbar{grid-column:1/3;margin-top:4px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.stats div{background:#1c2248;border-radius:12px;padding:10px;font-size:13px;color:#aab3e0;font-weight:700}
+.stats b{display:block;font-size:20px;color:#fff;margin-top:2px}
+#tip{position:fixed;left:16px;right:16px;display:none;background:#2a2f63;border:2px solid #ffb02e;border-radius:14px;padding:10px 14px;font-weight:700;font-size:16px;line-height:1.35;text-align:center;box-shadow:0 6px 22px rgba(0,0,0,.45);pointer-events:none;max-width:420px;margin:0 auto}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"><div id="sc">0</div><div id="bs"></div></div>
+<div id="ctrl"><button id="mn">Menu</button></div>
+<div id="tip"></div>
+<div id="ui"></div>
+<script>
+const c=document.getElementById('c'),g=c.getContext('2d'),ui=document.getElementById('ui');
+const COLS=7,ROWS=9,D=[[1,0],[-1,0],[0,1],[0,-1]],CC=['','#38c6f4','#4cd97b','#ffb02e'],SUR='#c86bfa';
+// Online leaderboard and 1v1: paste your Supabase project URL and public key here (see README). Leave empty to switch online features off.
+const LB={url:'https://zcoausnqpupkcgfznstr.supabase.co',key:'sb_publishable_J91_oildBmbw02vsqzi7tw_eiTrh5U5'};
+const MODES=[['classic','Classic','Play until the board fills. It gets harder the longer you last.'],['timed','Timed','60 seconds. Score as much as you can.'],['versus','1v1','Challenge a friend. Same board, 60 seconds, most points wins.'],['daily','Daily','The same board for everyone today.']];
+const NAMES={classic:'Classic',timed:'Timed',versus:'1v1',daily:'Daily'},ICON={classic:'♾️',timed:'⏱️',versus:'⚔️',daily:'📅'};
+const ls=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+const online=()=>!!(LB.url&&LB.key);
+const hdr=()=>{const h={apikey:LB.key};if(LB.key.startsWith('eyJ'))h.Authorization='Bearer '+LB.key;return h};
+let muted=ls('overload-muted',false),netOn=ls('overload-net',true),netMsg='';
+const net=()=>netOn&&online();
+let W,H,cell,gx,gy,grid,sg,next=[],rng=Math.random,daily=false,mode='classic',tLeft=60,started=false,last=0,score=0,shown=0,best=0,moves=0,lastLv=1,busy=true,over=false,fx=[],pops=[],shake=0;
+let selMode='classic',lbMode='classic',matchCode='',myId=null,matchDone=false,xp=null,dailyFirst=false,tut={i:0};
+{const s=ls('overload-sel',{m:'classic'});selMode=NAMES[s.m]?s.m:'classic'}
+let prof=ls('overload-profile',null);
+if(!prof){const old=String(ls('overload-name','')).trim().slice(0,12);if(old.length>=2){prof={name:old,xp:0,games:0,joined:Date.now()};lsSet('overload-profile',prof)}}
+let pname=prof?prof.name:'';
+const saveProf=()=>lsSet('overload-profile',prof);
+let rec=Object.assign({day:-1,score:0,streak:0,last:-9},ls('overload-daily',{}));
+const saveRec=()=>lsSet('overload-daily',rec);
+const dayIdx=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*60000)/864e5);
+const streak=()=>rec.last>=dayIdx()-1?rec.streak:0;
+const dayStreak=()=>prof&&prof.lastDay>=dayIdx()-1?(prof.streak||0):0;
+const timedMode=()=>mode==='timed'||mode==='versus';
+const lvl=()=>1+Math.floor(moves/10);
+function seeded(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hashCode(s){let h=2166136261;for(const ch of s){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function size(){
+  const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;c.width=W*d;c.height=H*d;g.setTransform(d,0,0,d,0,0);
+  const top=document.getElementById('hud').offsetHeight;
+  cell=Math.floor(Math.min((W-20)/COLS,(H-top-130)/ROWS));gx=(W-cell*COLS)/2;gy=top+16;
+}
+addEventListener('resize',size);size();
+let ac;
+function tone(f,d=.12,v=.1){if(muted)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),n=ac.createGain();o.frequency.value=f;n.gain.setValueAtTime(v,ac.currentTime);n.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(n);n.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const emptyCells=()=>{const e=[];grid.forEach((row,r)=>row.forEach((v,k)=>{if(!v)e.push([r,k])}));return e};
+const pop=(txt,size=1)=>pops.push({txt,t:0,size});
+// The game gets harder the longer a run lasts: more new dots per turn, higher charges, fewer purple dots.
+function plan(){
+  next=[];const e=emptyCells();
+  const rate=1+(moves+1)/25,n=Math.floor(rate)+(rng()<rate%1?1:0);
+  const p1=Math.max(.4,.78-moves*.004),p3=Math.min(.2,.04+moves*.002),sp=Math.max(.02,.08-moves*.001);
+  for(let i=0;i<n&&e.length;i++){
+    const[rr,k]=e.splice(rng()*e.length|0,1)[0],x=rng(),s=moves>=8&&rng()<sp;
+    next.push({r:rr,k,s,v:s?3:x<p1?1:x>1-p3?3:2});
+  }
+}
+function place(p){
+  let{r,k}=p;
+  if(grid[r][k]){const e=emptyCells();if(!e.length)return;[r,k]=e[rng()*e.length|0]}
+  grid[r][k]=p.v;sg[r][k]=p.s;
+  fx.push({type:'ring',x:k,y:r,t0:performance.now(),col:p.s?SUR:'#fff',dur:300});
+}
+function newGame(m){
+  if(started&&!over&&score>0&&(mode==='classic'||mode==='timed')){submit();award()}   // bank an unfinished run
+  mode=m||'classic';daily=mode==='daily';
+  rng=daily?seeded(dayIdx()):mode==='versus'?seeded(hashCode(matchCode)):Math.random;
+  tLeft=60;started=true;matchDone=false;myId=null;lastLv=1;
+  try{best=mode==='versus'||daily?0:+localStorage.getItem(mode==='timed'?'overload-best-timed':'overload-best')||0}catch(e){}
+  grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));sg=grid.map(r=>r.map(()=>false));
+  score=0;shown=0;moves=0;over=false;busy=false;fx=[];pops=[];
+  for(let i=0;i<11;i++){const e=emptyCells(),[r,k]=e[rng()*e.length|0];grid[r][k]=rng()<.75?1:2}
+  plan();ui.style.display='none';
+}
+async function tap(k,r){
+  if(busy||over||!grid[r][k])return;
+  if(mode==='tutorial'){const s=TUT[tut.i];if(!s||r!==s.target[0]||k!==s.target[1]){pop('Tap the arrow',.8);return}}
+  busy=true;moves++;
+  const lv=lvl();if(lv>lastLv){lastLv=lv;setTimeout(()=>{pop('Level '+lv,1);tone(520,.15,.08)},500)}
+  grid[r][k]++;tone(240,.08,.08);buzz(8);
+  let wave=grid[r][k]>=4?[[r,k]]:[],depth=0,total=0;
+  while(wave.length){
+    depth++;total+=wave.length;
+    const sgs=wave.map(([y,x])=>sg[y][x]);
+    wave.forEach(([y,x])=>{grid[y][x]=0;sg[y][x]=false});
+    const touched=new Set(),now=performance.now();
+    wave.forEach(([y,x],i)=>{
+      fx.push({type:'ring',x,y,t0:now,col:sgs[i]?SUR:'#ff5d73',dur:380});
+      D.forEach(([dy,dx])=>{
+        const ny=y+dy,nx=x+dx;
+        if(ny>=0&&nx>=0&&ny<ROWS&&nx<COLS&&grid[ny][nx]>0){grid[ny][nx]+=sgs[i]?2:1;touched.add(ny*COLS+nx);fx.push({type:'shot',x,y,x1:nx,y1:ny,t0:now,dur:140})}
+      });
+    });
+    score+=wave.length*10*Math.min(depth,6);
+    tone(260+Math.min(depth,14)*55,.14,.1);buzz(12);
+    shake=Math.min(14,depth*1.6);
+    if(depth>=3)pop('Chain x'+total,1+Math.min(depth,10)*.06);
+    wave=[...touched].map(v=>[v/COLS|0,v%COLS]).filter(([y,x])=>grid[y][x]>=4);
+    await sleep(150);
+  }
+  if(total&&mode!=='tutorial'&&grid.every(row=>row.every(v=>!v))){score+=300;pop('Board cleared +300',1.3)}
+  if(mode==='tutorial')return tutAfter();
+  next.forEach(place);plan();
+  if(emptyCells().length===0)return endGame();
+  busy=false;
+}
+function post(e){return fetch(LB.url+'/rest/v1/leaderboard',{method:'POST',headers:{...hdr(),'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({name:e.n,score:e.s,mode:e.m,diff:1,day:e.day})}).then(r=>{if(!r.ok)throw 0})}
+function send(e){post(e).catch(()=>{const q=ls('overload-pending',[]);q.push(e);lsSet('overload-pending',q.slice(-20))})}
+async function flush(){
+  if(!net())return;const q=ls('overload-pending',[]);if(!q.length)return;lsSet('overload-pending',[]);
+  for(const e of q){try{await post(e)}catch(x){const r=ls('overload-pending',[]);r.push(e);lsSet('overload-pending',r)}}
+}
+function submit(){
+  if(mode==='tutorial'||score<=0||!(mode==='versus'?online():net()))return;
+  send({n:(pname||'Player').slice(0,12),s:score,m:mode,day:dayIdx()});
+}
+function endGame(){
+  over=true;let nb=false;dailyFirst=false;
+  if(daily){
+    const d=dayIdx();
+    const firstToday=rec.day!==d;if(firstToday){rec.streak=rec.last===d-1?rec.streak+1:1;rec.last=d;rec.day=d;rec.score=0}
+    nb=score>rec.score;rec.score=Math.max(rec.score,score);saveRec();dailyFirst=firstToday;
+  }else if(mode!=='versus'&&score>best){nb=true;best=score;try{localStorage.setItem(mode==='timed'?'overload-best-timed':'overload-best',best)}catch(e){}}
+  submit();lbMode=mode;xp=award(dailyFirst?30:0);
+  if(mode==='versus')return versusEnd();
+  tone(170,.5,.12);
+  const line=daily?`Daily score ${score.toLocaleString()}<br>${streak()} daily challenges in a row`:`Score ${score.toLocaleString()}<br>${nb?'New best!':'Best '+best.toLocaleString()}`;
+  setTimeout(()=>{ui.style.display='flex';ui.innerHTML=`<div class=card><h1>${timedMode()&&tLeft<=0?'Time’s up':'Overloaded'}</h1><p>${line}</p>${xpHtml()}<p class=sm>${net()?'Sent to the online leaderboard':'Not sent to the leaderboard'}</p><button onclick="newGame('${mode}')">Play again</button><button class=alt onclick="board()">Leaderboard</button><button class=alt onclick="share()">Share score</button><button class=alt onclick="setup()">Menu</button></div>`},700);
+}
+function finishNow(){if(mode==='tutorial'){started=false;return setup()}endGame()}
+function share(){
+  const t='I scored '+score.toLocaleString()+' on Overload ('+NAMES[mode]+'). Can you beat it?';
+  try{(navigator.share?navigator.share({text:t}):navigator.clipboard.writeText(t)).catch(()=>{})}catch(e){}
+}
+// ---------- 1v1 ----------
+const CH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function versus(){
+  
+  if(!online()){netMsg='1v1 needs online play, which isn’t switched on in this version.';return setup()}
+  ui.style.display='flex';
+  ui.innerHTML=`<div class=card><h1>1v1</h1><p>You both play the same board for 60 seconds. Most points wins.</p>
+  <button onclick="createMatch()">Create a match</button>
+  <input id=cd maxlength=5 placeholder="Or enter a friend’s code" style="text-transform:uppercase">
+  <button class=alt onclick="joinMatch()">Join match</button>
+  <button class=alt onclick="setup()">Back</button></div>`;
+}
+function createMatch(){matchCode=Array.from({length:5},()=>CH[Math.random()*CH.length|0]).join('');lobby()}
+function joinMatch(){
+  const v=(document.getElementById('cd').value||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(v.length!==5)return;matchCode=v;lobby();
+}
+function lobby(){
+  ui.innerHTML=`<div class=card><h1>Match code</h1><div class=code>${matchCode}</div><p>Send this code to your friend. You both get the same board, so start whenever you’re ready.</p>
+  <button onclick="newGame('versus')">Start my 60 seconds</button><button class=alt onclick="shareCode()">Share code</button><button class=alt onclick="versus()">Back</button></div>`;
+}
+function shareCode(){
+  const t='Play me at Overload! 1v1 code: '+matchCode+'  '+location.href.split('#')[0];
+  try{(navigator.share?navigator.share({text:t}):navigator.clipboard.writeText(t)).catch(()=>{})}catch(e){}
+}
+async function versusEnd(){
+  tone(170,.5,.12);
+  ui.style.display='flex';
+  ui.innerHTML=`<div class=card><h1>Time’s up</h1><p>You scored ${score.toLocaleString()}</p>${xpHtml()}<p class=sm id=vs>Sending your score…</p><button class=alt onclick="pollMatch()">Check again</button><button class=alt onclick="setup()">Menu</button></div>`;
+  try{
+    const r=await fetch(LB.url+'/rest/v1/matches',{method:'POST',headers:{...hdr(),'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify({code:matchCode,name:(pname||'Player').slice(0,12),score})});
+    myId=(await r.json())[0].id;
+  }catch(e){const el=document.getElementById('vs');if(el)el.textContent='Couldn’t send your score. Check your internet connection.';return}
+  pollMatch(0);
+}
+async function pollMatch(tries=0){
+  const el=document.getElementById('vs');if(!el||!over||matchDone||myId==null)return;
+  el.textContent='Waiting for your friend to finish…';
+  try{
+    const r=await fetch(`${LB.url}/rest/v1/matches?select=id,name,score&code=eq.${matchCode}&order=id.asc`,{headers:hdr()});
+    const opp=(await r.json()).find(x=>x.id!==myId);
+    if(opp)return showResult(opp);
+  }catch(e){}
+  if(tries<60)setTimeout(()=>pollMatch(tries+1),3000);else el.textContent='Your friend hasn’t finished yet. Tap Check again in a bit.';
+}
+function showResult(opp){
+  if(matchDone)return;matchDone=true;
+  const w=score>opp.score,l=score<opp.score,rc=ls('overload-vs',{w:0,l:0});
+  if(w){rc.w++;bonusXp(50)}else if(l)rc.l++;lsSet('overload-vs',rc);
+  tone(w?660:200,.4,.12);
+  ui.innerHTML=`<div class=card><h1>${w?'You win!':l?'You lost':'Draw'}</h1><p>You ${score.toLocaleString()}<br>${esc(opp.name)} ${Number(opp.score).toLocaleString()}</p>${w?'<p class=sm style="color:#ffb02e;font-weight:800">+50 bonus XP for winning</p>':''}<button onclick="versus()">Rematch</button><button class=alt onclick="board()">Leaderboard</button><button class=alt onclick="setup()">Menu</button></div>`;
+}
+// ---------- account, level and XP ----------
+function levelInfo(x){let lv=1,need=100;while(x>=need){x-=need;lv++;need=100+40*(lv-1)}return{lv,into:x,need,pct:Math.round(x/need*100)}}
+function award(extra=0){
+  if(!prof)return null;
+  const before=levelInfo(prof.xp).lv,d=dayIdx();
+  let bonus=0,newDay=false;
+  if(moves>=5&&prof.lastDay!==d){
+    prof.streak=prof.lastDay===d-1?(prof.streak||0)+1:1;prof.lastDay=d;newDay=true;
+    prof.bestStreak=Math.max(prof.bestStreak||0,prof.streak);bonus=Math.min(50,5*prof.streak);
+  }
+  const gain=(moves>=5?20:0)+Math.min(150,Math.floor(score/50))+extra+bonus;
+  prof.xp+=gain;prof.games++;saveProf();
+  const L=levelInfo(prof.xp);
+  return{gain,L,up:L.lv>before,streak:dayStreak(),newDay,bonus};
+}
+function bonusXp(n){if(prof){prof.xp+=n;saveProf()}}
+function xpHtml(){
+  if(!xp)return '';
+  const sl=xp.newDay?`<p class=sm>🔥 Day ${xp.streak} streak · +${xp.bonus} bonus XP</p>`:xp.streak>0?`<p class=sm>🔥 ${xp.streak} day streak</p>`:'';
+  return `<p class=sm style="color:#ffb02e;font-weight:800">+${xp.gain} XP · ${xp.up?'Level up! You’re now level '+xp.L.lv:'Level '+xp.L.lv}</p><div class=xpbar><i style="width:${xp.L.pct}%"></i></div>${sl}`;
+}
+function chip(){
+  if(!prof)return '';
+  const L=levelInfo(prof.xp),s=dayStreak(),risk=s>0&&prof.lastDay===dayIdx()-1;
+  return `<div class=chip onclick="profile()"><b>${esc(prof.name)}</b><span>${s?'🔥 '+s+' · ':''}Level ${L.lv}</span><div class=xpbar><i style="width:${L.pct}%"></i></div>${risk?`<small style="grid-column:1/3;color:#aab3e0;font-size:13px">Play today to keep your ${s} day streak</small>`:''}</div>`;
+}
+function welcome(msg=''){
+  const dots=Array.from({length:14},(_,i)=>`<i style="left:${(i*37)%100}%;animation-delay:${-i*1.3}s;animation-duration:${9+(i%5)*2}s;width:${10+(i%4)*8}px;height:${10+(i%4)*8}px;background:${CC[1+i%3]}"></i>`).join('');
+  ui.style.display='flex';
+  ui.innerHTML=`<div class=fl>${dots}</div><div class=card>
+  <div class=mark><i style="grid-area:1/2;background:#38c6f4"></i><i style="grid-area:2/1;background:#ff5d73"></i><i style="grid-area:2/2;background:#ffb02e"></i><i style="grid-area:2/3;background:#c86bfa"></i><i style="grid-area:3/2;background:#4cd97b"></i></div>
+  <h1>Welcome</h1><p>Pick a name. Friends will see it on the leaderboard, and you earn XP and level up every time you play.</p>
+  <input id=nm maxlength=12 placeholder="Your name" autocomplete=off>
+  <p class=sm>${msg}</p>
+  <button class=play onclick="createProfile()">Let’s go</button></div>`;
+}
+function cleanName(){return ((document.getElementById('nm')||{}).value||'').trim().replace(/\s+/g,' ').slice(0,12)}
+function createProfile(){
+  const v=cleanName();
+  if(v.length<2)return welcome('Your name needs at least 2 characters.');
+  prof={name:v,xp:0,games:0,joined:Date.now()};saveProf();pname=v;
+  lsSet('overload-seen',true);tutorial();
+}
+function profile(){
+  const L=levelInfo(prof.xp),vs=ls('overload-vs',{w:0,l:0});
+  ui.style.display='flex';
+  ui.innerHTML=`<div class=card><h1>${esc(prof.name)}</h1><p>Level ${L.lv}</p><div class=xpbar><i style="width:${L.pct}%"></i></div>
+  <p class=sm>${L.into} / ${L.need} XP to level ${L.lv+1}</p>
+  <div class=stats><div>Day streak<b>🔥 ${dayStreak()}</b></div><div>Best streak<b>${Math.max(prof.bestStreak||0,dayStreak())}</b></div><div>Games played<b>${prof.games}</b></div><div>Total XP<b>${prof.xp.toLocaleString()}</b></div><div>Best Classic<b>${(+ls('overload-best',0)).toLocaleString()}</b></div><div>Best Timed<b>${(+ls('overload-best-timed',0)).toLocaleString()}</b></div><div>1v1 record<b>${vs.w}W · ${vs.l}L</b></div><div>Daily challenge streak<b>${streak()}</b></div></div>
+  <input id=nm maxlength=12 value="${esc(prof.name)}">
+  <button class=alt onclick="renameProfile()">Save name</button>
+  <button onclick="setup()">Back</button></div>`;
+}
+function renameProfile(){const v=cleanName();if(v.length<2)return;prof.name=v;pname=v;saveProf();profile()}
+// ---------- interactive tutorial ----------
+const tipEl=document.getElementById('tip');
+const put=a=>{grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));sg=grid.map(r=>r.map(()=>false));next=[];fx=[];a.forEach(([r,k,v,s])=>{grid[r][k]=v;if(s)sg[r][k]=true})};
+const TUT=[
+ {t:'Welcome! Tap the glowing dot to add 1 charge to it.',set:()=>put([[4,3,2]]),target:[4,3]},
+ {t:'Nice! Tap it again. When a dot reaches 4 charge, it bursts.',target:[4,3]},
+ {t:'A burst gives +1 charge to the dots next to it. Tap the middle dot to start a chain!',set:()=>put([[4,2,3],[4,3,3],[4,4,3],[3,2,3],[5,4,3]]),target:[4,3]},
+ {t:'Dashed outlines show where new dots will land after your tap. Tap this dot.',set:()=>{put([[3,3,1],[5,3,2]]);next=[{r:6,k:1,s:false,v:1},{r:7,k:5,s:false,v:2}]},target:[5,3]},
+ {t:'Purple dots give +2 charge to their neighbours. Tap the purple dot!',set:()=>put([[4,3,3,true],[4,2,2],[4,4,2],[3,3,2],[5,3,2]]),target:[4,3]}
+];
+function tutorial(){
+  if(started&&!over&&score>0&&(mode==='classic'||mode==='timed')){submit();award()}
+  mode='tutorial';daily=false;rng=Math.random;started=true;over=false;score=0;shown=0;moves=0;lastLv=1;pops=[];
+  tut={i:0};ui.style.display='none';tutLoad();
+}
+function tutLoad(){
+  const s=TUT[tut.i];
+  if(!s)return tutDone();
+  if(s.set)s.set();
+  tipEl.innerHTML=s.t+'<br><small style="font-weight:600;color:#aab3e0;pointer-events:auto" onclick="tutSkip()">Skip tutorial</small>';
+  busy=false;
+}
+function tutAfter(){
+  const i=tut.i;
+  if(i===3){next.forEach(place);next=[]}
+  setTimeout(()=>{if(mode!=='tutorial')return;tut.i=i+1;tutLoad()},i===0?400:1100);
+}
+function tutSkip(){started=false;over=true;mode='classic';tipEl.style.display='none';setup()}
+function tutDone(){
+  started=false;over=true;mode='classic';tipEl.style.display='none';
+  const first=!ls('overload-tutdone',false);
+  if(first){lsSet('overload-tutdone',true);bonusXp(30)}
+  tone(660,.3,.12);
+  ui.style.display='flex';
+  ui.innerHTML=`<div class=card><h1>You’re ready!</h1><p>The game gets harder every 10 taps, and it’s over when the board fills up. Chain big and climb the leaderboard.</p>${first?'<p class=sm style="color:#ffb02e;font-weight:800">+30 XP for finishing the tutorial</p>':''}<button onclick="newGame('classic')">Play Classic</button><button class=alt onclick="setup()">Menu</button></div>`;
+}
+// ---------- menu ----------
+function pick(m){selMode=m;lsSet('overload-sel',{m:selMode});setup()}
+function start(){flush();if(selMode==='versus')return versus();newGame(selMode)}
+function resumeGame(){ui.style.display='none'}
+function pickNet(on){
+  
+  if(on&&!online()){netMsg='Online play isn’t switched on in this version yet.';setup();return}
+  netMsg='';netOn=on;lsSet('overload-net',on);setup();
+}
+function toggleSound(){muted=!muted;lsSet('overload-muted',muted);setup()}
+function setup(){
+  
+  const resume=started&&!over;
+  if(!resume){busy=true;grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));sg=grid.map(r=>r.map(()=>false));next=[]}
+  const st=streak(),md=MODES.find(m=>m[0]===selMode),nm=netMsg;netMsg='';
+  const vs=ls('overload-vs',{w:0,l:0});
+  const stat={classic:'Best '+(+ls('overload-best',0)).toLocaleString(),timed:'Best '+(+ls('overload-best-timed',0)).toLocaleString(),versus:'W '+vs.w+' · L '+vs.l,daily:rec.day===dayIdx()?'Today '+rec.score.toLocaleString():st?st+' in a row':'New board daily'};
+  const dots=Array.from({length:14},(_,i)=>`<i style="left:${(i*37)%100}%;animation-delay:${-i*1.3}s;animation-duration:${9+(i%5)*2}s;width:${10+(i%4)*8}px;height:${10+(i%4)*8}px;background:${CC[1+i%3]}"></i>`).join('');
+  ui.style.display='flex';
+  ui.innerHTML=`<div class=fl>${dots}</div><div class=card>
+  <div class=mark><i style="grid-area:1/2;background:#38c6f4"></i><i style="grid-area:2/1;background:#ff5d73"></i><i style="grid-area:2/2;background:#ffb02e"></i><i style="grid-area:2/3;background:#c86bfa"></i><i style="grid-area:3/2;background:#4cd97b"></i></div>
+  <h1>Overload</h1><p class=tag>Tap. Chain. Overload.</p>
+  ${chip()}
+  <div class=lbl>Mode</div>
+  <div class=modes>${MODES.map(m=>`<button class="mc ${m[0]===selMode?'on':''}" onclick="pick('${m[0]}')"><span class=ic>${ICON[m[0]]}</span><b>${m[1]}</b><small>${stat[m[0]]}</small></button>`).join('')}</div>
+  <p class=sm>${md[2]}</p>
+  <div class=lbl>Scores</div>
+  <div class=seg><button class="${net()?'on':''}" onclick="pickNet(true)">🌐 Online<small>${online()?'Shared leaderboard':'Not set up yet'}</small></button><button class="${net()?'':'on'}" onclick="pickNet(false)">📴 Offline<small>Scores not shared</small></button></div>
+  <p class=sm>${nm}</p>
+  <button class=play onclick="start()">${selMode==='versus'?'Set up 1v1':'Play '+md[1]}</button>
+  ${resume?'<button class=alt onclick="resumeGame()">Resume current game</button><button class=alt onclick="finishNow()">End this game and submit score</button>':''}
+  <div class=row3><button class=alt onclick="board()">🏆 Scores</button><button class=alt onclick="profile()">👤 Profile</button><button class=alt onclick="howto()">❓ Help</button><button class=alt onclick="toggleSound()">${muted?'🔇':'🔊'}</button></div>
+  </div>`;
+}
+function howto(){
+  
+  ui.style.display='flex';
+  ui.innerHTML=`<div class=card><h1>How to play</h1>
+  <div class=hw><i style="background:#38c6f4">1</i><span>Tap a dot to add 1 charge to it.</span></div>
+  <div class=hw><i style="background:#4cd97b">2</i><span>At 4 a dot bursts and charges the dots next to it.</span></div>
+  <div class=hw><i style="background:#ffb02e">3</i><span>Line up 3s side by side, then pop one for a huge chain.</span></div>
+  <div class=hw><i style="background:#c86bfa">★</i><span>Purple dots hit harder. Dashed outlines show where new dots will land.</span></div>
+  <div class=hw><i style="background:#ff5d73">!</i><span>The game gets harder every 10 taps. Don’t let the board fill up.</span></div>
+  <button onclick="tutorial()">▶ Play the tutorial</button><button class=alt onclick="setup()">Back</button></div>`;
+}
+async function board(){
+  
+  ui.style.display='flex';
+  const modes=['classic','timed','versus','daily'];
+  ui.innerHTML=`<div class=card><h1>Leaderboard</h1>
+  <div class=seg>${modes.map(m=>`<button class="${m===lbMode?'on':''}" onclick="lbMode='${m}';board()">${NAMES[m]}</button>`).join('')}</div>
+  <div id=rows class=rows>Loading…</div>
+  <p class=sm>${lbMode==='daily'?'Today’s scores only. ':''}Best score per player.</p>
+  <button class=alt onclick="setup()">Back</button></div>`;
+  let rows=null;
+  if(online()){
+    try{
+      const q=`${LB.url}/rest/v1/leaderboard?select=name,score&mode=eq.${lbMode}${lbMode==='daily'?'&day=eq.'+dayIdx():''}&order=score.desc&limit=100`;
+      const r=await fetch(q,{headers:hdr()}),seen=new Set();
+      rows=(await r.json()).filter(x=>{const k=String(x.name).toLowerCase();if(seen.has(k))return false;seen.add(k);return true}).slice(0,10);
+    }catch(e){rows=null}
+  }
+  const el=document.getElementById('rows');if(!el)return;
+  const me=pname.toLowerCase();
+  el.innerHTML=!online()?'The online leaderboard isn’t set up in this version.':rows===null?'Couldn’t load the leaderboard. Check your internet connection and try again.':rows.length?rows.map((x,i)=>`<div class=r${String(x.name).toLowerCase()===me?' style="color:#ffb02e;font-weight:800"':''}><span>${i+1}</span><span>${esc(x.name)}</span><span>${Number(x.score).toLocaleString()}</span></div>`).join(''):'No scores yet. Be the first!';
+}
+document.getElementById('mn').onclick=()=>setup();
+addEventListener('pointerdown',e=>{
+  if(ui.style.display==='flex')return;
+  const k=Math.floor((e.clientX-gx)/cell),r=Math.floor((e.clientY-gy)/cell);
+  if(k>=0&&r>=0&&k<COLS&&r<ROWS)tap(k,r);
+});
+const cx=k=>gx+(k+.5)*cell,cy=r=>gy+(r+.5)*cell,FONT='"Avenir Next","Trebuchet MS",system-ui,sans-serif';
+function frame(){
+  const now=performance.now(),d=devicePixelRatio||1,dt=Math.min(.1,(now-last)/1000||0);last=now;
+  if(timedMode()&&started&&!over&&(mode==='versus'||ui.style.display!=='flex')){tLeft-=dt;if(tLeft<=0){tLeft=0;endGame()}}
+  g.setTransform(d,0,0,d,0,0);
+  g.fillStyle='#0f1226';g.fillRect(0,0,W,H);
+  if(shake>.3){g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.9}
+  const n=emptyCells().length,low=n<=8;
+  g.fillStyle='#171c3b';g.beginPath();g.roundRect(gx-6,gy-6,cell*COLS+12,cell*ROWS+12,16);g.fill();
+  if(low&&!over){g.strokeStyle='rgba(255,93,115,'+(.35+.3*Math.sin(now/180))+')';g.lineWidth=3;g.stroke()}
+  g.textAlign='center';g.textBaseline='middle';
+  for(let r=0;r<ROWS;r++)for(let k=0;k<COLS;k++){
+    const v=grid[r][k];
+    if(!v){g.fillStyle='#232a52';g.beginPath();g.arc(cx(k),cy(r),cell*.1,0,7);g.fill();continue}
+    const pulse=v===3?1+.06*Math.sin(now/110):1;
+    g.fillStyle=sg[r][k]?SUR:CC[v];g.beginPath();g.arc(cx(k),cy(r),cell*.39*pulse,0,7);g.fill();
+    if(sg[r][k]){g.strokeStyle='#fff';g.lineWidth=3;g.stroke()}
+    g.fillStyle='rgba(255,255,255,.28)';g.beginPath();g.arc(cx(k)-cell*.1,cy(r)-cell*.12,cell*.13,0,7);g.fill();
+    g.fillStyle='#10132a';g.font='800 '+Math.round(cell*.42)+'px '+FONT;g.fillText(v,cx(k),cy(r)+cell*.03);
+  }
+  if(!over)next.forEach(p=>{
+    g.globalAlpha=.6;g.strokeStyle=p.s?SUR:CC[p.v];g.lineWidth=2;g.setLineDash([4,4]);
+    g.beginPath();g.arc(cx(p.k),cy(p.r),cell*.3,0,7);g.stroke();g.setLineDash([]);
+    g.fillStyle=p.s?SUR:CC[p.v];g.font='700 '+Math.round(cell*.28)+'px '+FONT;g.fillText(p.v,cx(p.k),cy(p.r)+cell*.02);g.globalAlpha=1;
+  });
+  if(mode==='tutorial'&&!over&&!busy&&TUT[tut.i]){
+    const[tr,tk]=TUT[tut.i].target,bob=Math.sin(now/180)*6,ax=cx(tk),ay=cy(tr)-cell*.62+bob;
+    g.strokeStyle='#ffe14a';g.lineWidth=4;g.beginPath();g.arc(cx(tk),cy(tr),cell*(.5+.05*Math.sin(now/150)),0,7);g.stroke();
+    g.fillStyle='#ffe14a';g.beginPath();g.moveTo(ax,ay);g.lineTo(ax-cell*.24,ay-cell*.4);g.lineTo(ax+cell*.24,ay-cell*.4);g.closePath();g.fill();
+    g.fillRect(ax-cell*.08,ay-cell*.4-cell*.3,cell*.16,cell*.32);
+  }
+  fx=fx.filter(f=>now-f.t0<f.dur);
+  fx.forEach(f=>{
+    const p=(now-f.t0)/f.dur;
+    if(f.type==='ring'){g.globalAlpha=1-p;g.strokeStyle=f.col;g.lineWidth=4;g.beginPath();g.arc(cx(f.x),cy(f.y),cell*(.3+p*.9),0,7);g.stroke()}
+    else{g.globalAlpha=1;g.fillStyle='#fff';g.beginPath();g.arc(cx(f.x)+(cx(f.x1)-cx(f.x))*p,cy(f.y)+(cy(f.y1)-cy(f.y))*p,cell*.1,0,7);g.fill()}
+  });
+  g.globalAlpha=1;
+  g.fillStyle=low?'#ff8a9a':'#8e98cc';g.font='700 16px '+FONT;
+  g.fillText(n+' spaces left',W/2,gy+cell*ROWS+34);
+  pops=pops.filter(q=>q.t<70);
+  pops.forEach(q=>{
+    g.globalAlpha=Math.max(0,1-q.t/70);g.font='800 '+Math.round(cell*.7*q.size)+'px '+FONT;
+    g.lineWidth=6;g.strokeStyle='rgba(10,12,28,.9)';g.fillStyle='#fff';
+    const y=gy+cell*ROWS*.45-q.t*.8;g.strokeText(q.txt,W/2,y);g.fillText(q.txt,W/2,y);q.t++;
+  });
+  g.globalAlpha=1;
+  shown+=(score-shown)*.2;if(Math.abs(score-shown)<1)shown=score;
+  document.getElementById('sc').textContent=Math.round(shown).toLocaleString();
+  const bt=Math.max(best,score).toLocaleString(),lv='Level '+lvl();
+  tipEl.style.display=mode==='tutorial'&&!over&&ui.style.display!=='flex'?'block':'none';tipEl.style.top=(gy+6)+'px';
+  document.getElementById('bs').textContent=mode==='tutorial'?'Tutorial '+Math.min(tut.i+1,TUT.length)+'/'+TUT.length:mode==='versus'?Math.ceil(tLeft)+'s · 1v1':mode==='timed'?Math.ceil(tLeft)+'s · Best '+bt:daily?'Daily · '+lv:lv+' · Best '+bt;
+  requestAnimationFrame(frame);
+}
+grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));sg=grid.map(r=>r.map(()=>false));
+frame();
+if(!prof)welcome();else{setup();if(!ls('overload-seen',false)){lsSet('overload-seen',true);tutorial()}}
+</script>
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))</script>
+</body>
+</html>
