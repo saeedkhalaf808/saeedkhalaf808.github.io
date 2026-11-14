@@ -1,0 +1,89 @@
+OVERLOAD: PUT IT ON GOOGLE PLAY (no Android Studio needed)
+
+Before you start: open privacy.html in a text editor and replace YOUR-EMAIL-HERE with your real email.
+
+PART 1: PUT THE GAME ON THE INTERNET (free)
+1. Sign in at github.com. Create a new PUBLIC repository named exactly:  saeedkhalaf808.github.io
+2. Click "Add file" > "Upload files". Drag in everything from this folder (index.html, manifest.webmanifest, sw.js, privacy.html and the png files).
+3. Also click "Add file" > "Create new file", name it  .nojekyll  (leave it empty), and commit. (Hidden files often get skipped by uploads.)
+4. Repository Settings > Pages > Build and deployment > Deploy from a branch > main, root. Save. Wait a minute or two.
+5. Open https://saeedkhalaf808.github.io on your Android phone in Chrome. The game should load. Your privacy policy will be at https://saeedkhalaf808.github.io/privacy.html
+
+PART 2: TURN IT INTO AN ANDROID APP
+1. Go to pwabuilder.com, enter https://saeedkhalaf808.github.io and press Start.
+2. When the report finishes, choose Package for stores > Android > Google Play.
+3. Package ID: com.nih.overload (you can change it, but it can NEVER be changed after you publish). App name: Overload. Version 1.
+4. Let it generate a new signing key. Download the zip.
+5. KEEP THE SIGNING KEY FILE AND ITS PASSWORD SAFE FOREVER (back them up in two places). If you lose them you cannot update the app.
+6. The zip contains an .aab file (this is what you upload) and an assetlinks.json file. In your GitHub repo, create the file  .well-known/assetlinks.json  and paste in the contents. This removes the browser bar so it looks like a real app.
+7. If Google Play later rejects the file for targeting an old Android version, tell me and we will rebuild it with a different tool.
+
+PART 3: GOOGLE PLAY CONSOLE
+1. Create a developer account at play.google.com/console (one-off USD 25 fee, you need ID verification). Choose "Personal".
+2. Create app: name Overload, Game, Free.
+3. Testing > Closed testing: create a release, upload the .aab, add 12+ testers by email (they need Android phones and Gmail), and send them the opt-in link. They must stay opted in for 14 days in a row.
+4. While you wait, fill in: store listing (icon-512.png, feature-graphic-1024x500.png, at least 2 screenshots taken on your phone), privacy policy URL, content rating questionnaire, Data safety form (answer: no data collected), target audience.
+5. After 14 days, apply for Production access in the Play Console. Review can take several days.
+
+LATER: ads and in-app purchases need a different build (a native wrapper such as Capacitor) because this web-app version cannot show Google AdMob ads. The game files stay the same.
+
+
+ONLINE LEADERBOARD (optional, so friends can compete with each other)
+By default the leaderboard shows scores saved on each person's own phone only. To make a shared one:
+1. Make a free account at supabase.com and create a new project.
+2. Open the SQL Editor, paste in everything from supabase-setup.sql, and press Run.
+3. Go to the project settings, API section. Copy the Project URL and the public key (it may be called anon or publishable).
+   Do NOT use the secret / service_role key. Never share that one.
+4. In index.html, find the line:  const LB={url:'',key:''};
+   and put your values between the quotes, like  const LB={url:'https://abc.supabase.co',key:'your-public-key'};
+5. Upload the changed index.html to GitHub again.
+Note: anyone could post a fake score, because there is no cheat protection yet. It is fine for friends.
+
+
+1V1 MATCHES (needs the online leaderboard to be set up first)
+Run supabase-update-1v1.sql once in the Supabase SQL Editor. Then upload the new index.html to GitHub.
+One player taps Play on 1v1 > Create a match and sends the 5 letter code. The friend taps Join match and types it in.
+Both play the same board for 60 seconds. The results screen shows who won once both have finished.
+
+
+OPEN QUEUE FOR 1V1 (Find an opponent)
+Run supabase-update-queue.sql once in the Supabase SQL Editor, then upload the new index.html to GitHub.
+Players tap 1v1 > Find an opponent. The first person waits in the queue, the next person to search is paired with them,
+and both get a 3 second countdown, then play the same board for 60 seconds.
+
+
+ACCOUNT TRANSFER (connect devices)
+Run supabase-update-accounts.sql once in the Supabase SQL Editor, then upload the new index.html.
+On the old device: Menu > Settings > Transfer or connect account > Create link code. Write the code down.
+On the new device: tap "I already have an account" on the welcome screen (or Settings > Transfer or connect account) and type the code.
+Anyone who has the code can use the account, so keep it private.
+
+
+SEASON RESET
+The game resets everyone's best scores and records once (RESET_VERSION in index.html). XP, level, streak and name are kept.
+After uploading the new index.html, run supabase-reset-season.sql in the Supabase SQL Editor to wipe the online leaderboard.
+To reset again in future, change RESET_VERSION from 1 to 2 and run the SQL again.
+
+EMAIL SIGN-IN
+1. Run supabase-update-email.sql in the Supabase SQL Editor.
+2. In Supabase go to Authentication > Emails (Email Templates) > Magic Link and put the code in the email body, for example:
+   <h2>Your Overload code</h2><p>Enter this code: <strong>{{ .Token }}</strong></p>
+3. IMPORTANT: Supabase's built-in email sender only sends 2 emails per hour, and only to members of your Supabase team.
+   To let friends sign in you must add your own email sender under Authentication > SMTP Settings (for example Resend, which needs a domain you own).
+   Until then, email sign-in will only work for your own email. Link codes work for everyone with no setup.
+
+
+UNIQUE NAMES
+Run supabase-update-names.sql once in the Supabase SQL Editor. After that nobody can take a name someone else has (capitals, spaces, _ and - are ignored when comparing).
+Players who already have a name claim it the next time they open the game online. If two friends had the same name, the second one is asked to pick a new one.
+Run this BEFORE or right after uploading the new index.html. Until it is run, names are not checked.
+
+REMINDERS ("I believe in you" notifications)
+On a normal web page the browser can only show a reminder while the page is still running in the background, so they are best effort.
+Proper reminders a day or two later work in the Android app (Capacitor LocalNotifications plugin). The game already calls it when it is present.
+
+
+RANKED
+"Play ranked" in 1v1 uses the open queue. Ranked match codes start with the letter R, friendly (code) matches never do.
+Ratings are worked out with the Elo system from the finished ranked matches in the matches table (everyone starts at 1000, a win against an equal player is worth +16).
+Tiers: Bronze, Silver (900), Gold (1050), Platinum (1200), Diamond (1350), Master (1500). No database change is needed.
